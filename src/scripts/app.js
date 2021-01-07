@@ -46,7 +46,7 @@ function manipulatePlacesData(places, box) {
 
 function notifyUserForNoResults(box) {
   box.insertAdjacentHTML('beforeend', 
-  `<li> No results found </li>`)
+  `<span> No results found </span>`)
 }
 
 function originFormFunctionality(event, box) {
@@ -66,6 +66,28 @@ function originFormFunctionality(event, box) {
   }
 }
 
+function manipulateTheList(event, box) {
+  if(event.target.nodeName !== "FORM" && event.target.nodeName !== 'INPUT') {
+    let target;
+    if(event.target.nodeName === "LI"){
+     target = event.target;
+    } else if( event.target.parentElement.nodeName === "LI") {
+      target = event.target.parentElement;
+    }
+    selectAPlace(target, box);
+  }
+}
+
+function selectAPlace(target, box){
+  let selectedli = box.querySelector('.selected');
+  if(selectedli) {
+    selectedli.classList.remove('selected');
+  }
+  if(target) {
+    target.classList.add('selected');
+  }
+}
+
 originForm.addEventListener('submit', (event) => {
   event.preventDefault();
   originFormFunctionality(event, originUL);
@@ -74,4 +96,12 @@ originForm.addEventListener('submit', (event) => {
 destinationForm.addEventListener('submit', (event) => {
   event.preventDefault();
   originFormFunctionality(event, destinationUL);
+})
+
+originContainer.addEventListener('click', (event) => {
+  manipulateTheList(event, originUL)
+})
+
+destinationUL.addEventListener('click', (event) => {
+  manipulateTheList(event, destinationUL)
 })
