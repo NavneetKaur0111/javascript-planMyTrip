@@ -4,7 +4,6 @@ const csso = require('gulp-csso');
 const uglify = require('gulp-uglify');
 const concat = require('gulp-concat');
 const sourcemaps = require('gulp-sourcemaps');
-const image = require('gulp-image');
 const browserSync = require('browser-sync').create();
 const babel = require('gulp-babel');
 const surge = require('gulp-surge');
@@ -29,11 +28,13 @@ function clearTask() {
 }
 
 function htmlTask() {
-  return src('src/*.html').pipe(dest('dist'));
+  return src('src/*.html')
+    .pipe(dest('dist'));
 }
 
 function imagesTask() {
-  return src('src/images/*').pipe(image()).pipe(dest('dist/images'));
+  return src('src/images/*')
+    .pipe(dest('dist/images'));
 }
 
 function stylesTask() {

@@ -17,7 +17,6 @@
     "gulp-babel": "^8.0.0",
     "gulp-concat": "^2.6.1",
     "gulp-csso": "^4.0.1",
-    "gulp-image": "^6.2.1",
     "gulp-sourcemaps": "^3.0.0",
     "gulp-surge": "^0.1.4",
     "gulp-uglify": "^3.0.2"
