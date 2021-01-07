@@ -33,7 +33,6 @@ function printPlaceName( place, box) {
 }
 
 function manipulatePlacesData(places, box) {
-  box.innerHTML = "";
   places.forEach(place => {
     const placeData = {
       'lat' : place.center[1],
@@ -45,15 +44,21 @@ function manipulatePlacesData(places, box) {
   })
 }
 
+function notifyUserForNoResults(box) {
+  box.insertAdjacentHTML('beforeend', 
+  `<li> No results found </li>`)
+}
+
 function originFormFunctionality(event, box) {
   if(event.target.nodeName === "FORM"){
     const input = event.target.firstElementChild
     const placeName = input.value;
     input.value = "";
     fetchPlaces(placeName)
-      .then((data) => {
+    .then((data) => {
+        box.innerHTML = "";
         if(data.features.length === 0) {
-          console.log("data not found")
+          notifyUserForNoResults(box)
         } else {
           manipulatePlacesData(data.features, box)
         }
