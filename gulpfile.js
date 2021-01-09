@@ -61,7 +61,7 @@ function scriptsTask() {
 function deployTask () {
   return surge({
     project: './dist',
-    domain: 'plan-my-trip.surge.sh'
+    domain: 'planmytrip-navneet.surge.sh'
   })
 }
 

@@ -27,7 +27,7 @@ function fetchPlaces(placeName) {
         return data.json();
       }
     })
-    .catch((error) => console.log("error:" + error));
+    .catch((error) => notifyUserForDataError(`error: No Data found`));
 }
 
 function fetchTheTrip(origin, dest) {
@@ -40,8 +40,7 @@ function fetchTheTrip(origin, dest) {
     }
   })
   .catch((error) => {
-      console.log("error:" + error)
-      notifyUserForDataError(`No Data found`)
+      notifyUserForDataError(`error: No Data found`)
     });
 }
 
@@ -231,7 +230,6 @@ function workWithTrips(myTrips) {
 }
 
 function checkIfTripsFound(trips) {
-  console.log('clear');
   if (trips.length === 0) {
     notifyUserForDataError("no routes found");
   } else {
@@ -247,7 +245,7 @@ function planningTripFunctionality(origin, destination) {
       checkIfTripsFound(tripsResponse.plans);
     } else (notifyUserForDataError("No data found"))
   })
-  .catch(error => console.log('error:' + error));
+  .catch(error => notifyUserForDataError('error:' + error));
 }
 
 function planTrip() {
