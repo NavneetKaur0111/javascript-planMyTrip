@@ -1,9 +1,3 @@
-//https://api.mapbox.com/geocoding/v5/mapbox.places/starbucks.json?bbox=-97.325875,%2049.766204,%20-96.953987,%2049.99275&access_token=pk.eyJ1IjoibmF2bmVldGthdXIxMTAxMDIiLCJhIjoiY2tqbGx6MXJ2NHFvbDJycDkzZTJtcnBldCJ9._8bFHYShajMmYkmTvZn-Ng&limit=10
-//get the loactions
-
-//https://api.winnipegtransit.com/v3/trip-planner.json?api-key=2T4MALF1Wx9A3YtpUmKz&origin=addresses/136590&destination=intersections/123172:378@954
-//get the segments
-
 const mapBoxApiKey =
   "pk.eyJ1IjoibmF2bmVldGthdXIxMTAxMDIiLCJhIjoiY2tqbGx6MXJ2NHFvbDJycDkzZTJtcnBldCJ9._8bFHYShajMmYkmTvZn-Ng";
 const mapBoxBaseUrl = "https://api.mapbox.com/geocoding/v5/";
@@ -27,15 +21,28 @@ const alternativeTrips = document.querySelector(".alternative-trips");
 function fetchPlaces(placeName) {
   return fetch(
     `${mapBoxBaseUrl}mapbox.places/${placeName}.json?bbox=${winnipegCoords}&access_token=${mapBoxApiKey}&limit=10`
-  ).then((data) => data.json())
-   .catch((error) => console.log('error:' + error));
+  )
+    .then((data) => {
+      if(data.status === 200) {
+        return data.json();
+      }
+    })
+    .catch((error) => console.log("error:" + error));
 }
 
 function fetchTheTrip(origin, dest) {
   return fetch(
     `${transitBaseUrl}api-key=${transitApiKey}&origin=geo/${origin.lat},${origin.long}&destination=geo/${dest.lat},${dest.long}`
-  ).then((data) => data.json())
-  .catch((error) => console.log('error:' + error));
+  )
+  .then((data) => {
+    if(data.status === 200) {
+      return data.json();
+    }
+  })
+  .catch((error) => {
+      console.log("error:" + error)
+      notifyUserForDataError(`No Data found`)
+    });
 }
 
 function printPlaceName(place, box) {
@@ -63,7 +70,7 @@ function manipulatePlacesData(places, box) {
   });
 }
 
-function notifyUserForNoRelatedPlacesFound(box) {
+function notifyUserForNoRelatedDataFound(box) {
   box.insertAdjacentHTML("beforeend", `<span> No results found </span>`);
 }
 
@@ -75,7 +82,7 @@ function originFormFunctionality(event, box) {
     fetchPlaces(placeName).then((data) => {
       box.innerHTML = "";
       if (data.features.length === 0) {
-        notifyUserForNoRelatedPlacesFound(box);
+        notifyUserForNoRelatedDataFound(box);
       } else {
         manipulatePlacesData(data.features, box);
       }
@@ -125,133 +132,129 @@ function checkForSelectedPlaces(origin, dest) {
 }
 
 function notifyUserForDataError(message) {
-  busContainer.innerHTML = "";
-  busContainer.insertAdjacentHTML(
+  recommendedTrip.innerHTML = "";
+  recommendedTrip.insertAdjacentHTML(
     "beforeend",
     `<h2 class="message"> ${message} <h2>`
   );
 }
 
 function manipulateTripsData(trips) {
-  let myTrips = {}, tripsArray=[];
+  let myTrips = {},
+    tripsArray = [];
   for (let trip in trips) {
     const currTrip = trips[trip];
     const duration = currTrip["times"]["durations"]["total"];
     const segments = currTrip["segments"];
     myTrips[duration] = {
-      "duration" : duration,
-      "segments" : segments,
+      duration: duration,
+      segments: segments,
     };
   }
-  for(let trip in myTrips) {
+  for (let trip in myTrips) {
     tripsArray.push(myTrips[trip]);
   }
   return tripsArray;
 }
 
-function printRecommendedTrip(trip) {
-  console.log(trip)
-
-  const newUl = document.createElement('ul');
-  newUl.classList.add('my-trip');
-  recommendedTrip.appendChild(newUl);
+function printTrip(trip, tripBox) {
+  const newUl = document.createElement("ul");
+  newUl.classList.add("my-trip");
+  tripBox.appendChild(newUl);
 
   trip.segments.forEach((segment) => {
-    const type = segment.type ;
-    if(type === 'walk') {
-      printWalk(segment,newUl);
-    } else if(type === "ride") {
-      printRide(segment,newUl);
-    } else if(type === "transfer") {
-      printtransfer(segment,newUl);
+    const type = segment.type;
+    if (type === "walk") {
+      manipulateAndPrintWalk(segment, newUl);
+    } else if (type === "ride") {
+      manipulateAndPrintRide(segment, newUl);
+    } else if (type === "transfer") {
+      manipulateAndPrinttransfer(segment, newUl);
     }
-  })
+  });
 }
 
-function printAlternativeTrip(trip) {
-  console.log(trip);
-  const newUl = document.createElement('ul');
-  newUl.classList.add('my-trip');
-  alternativeTrips.appendChild(newUl);
-  
-  trip.segments.forEach((segment) => {
-    const type = segment.type ;
-    if(type === 'walk') {
-      printWalk(segment,newUl);
-    } else if(type === "ride") {
-      printRide(segment,newUl);
-    } else if(type === "transfer") {
-      printtransfer(segment,newUl);
-    }
-  })
-}
-
-function printtransfer(segment,box){
-box.insertAdjacentHTML('beforeend', 
-`<li>
+function manipulateAndPrinttransfer(segment, box) {
+  box.insertAdjacentHTML(
+    "beforeend",
+    `<li>
 <i class="fas fa-ticket-alt" aria-hidden="true"></i>Transfer from stop
 #${segment["from"]["stop"]["key"]} - ${segment["from"]["stop"]["name"]} to stop #${segment["to"]["stop"]["key"]} - ${segment["to"]["stop"]["name"]}
-</li>`)
+</li>`
+  );
 }
 
-function printRide(segment, box) {
+function manipulateAndPrintRide(segment, box) {
   const durations = segment["times"]["durations"]["total"];
-  box.insertAdjacentHTML('beforeend', 
-  `<li>
-  <i class="fas fa-bus" aria-hidden="true"></i>Ride the Route ${segment["route"]["key"]} ${segment["route"]["name"]}for ${durations} minutes.
-</li>`)
-}
-
-function printWalk(segment, box) {
-  console.log(segment.times);
-  const duration = segment["times"]["durations"]["total"];
-  const destination = segment["to"];
-  if(destination["stop"] === undefined){
-    box.insertAdjacentHTML('beforeend', 
+  box.insertAdjacentHTML(
+    "beforeend",
     `<li>
-    <i class="fas fa-walking" aria-hidden="true"></i>Walk for ${duration}  minutes to
-    your destination.
-  </li>`)
-  } else {
-    box.insertAdjacentHTML('beforeend', 
-  `<li>
-  <i class="fas fa-walking" aria-hidden="true"></i>Walk for ${duration} minutes
-  to stop #${destination["stop"]["key"]} - ${destination["stop"]["name"]}
-</li>`)
-  }
+  <i class="fas fa-bus" aria-hidden="true"></i>Ride the Route ${segment["route"]["key"]} ${segment["route"]["name"]}for ${durations} minutes.
+</li>`
+  );
 }
 
-function workWithTrips(allTrips) {
-  if (allTrips.plans.length === 0) {
-    notifyUserForNoRelatedPlacesFound("no routes found");
-  } else {
-    const myTrips = manipulateTripsData(allTrips.plans);
-    recommendedTrip.innerHTML= "";
-    alternativeTrips.innerHTML ="";
-    recommendedTrip.insertAdjacentHTML('beforeend', 
-    ` <h2>Recommeded-Trip</h2>`)
-    alternativeTrips.insertAdjacentHTML('beforeend',
-    `<h2>Alternative-Trips</h2>`)
-    for(let trip = 0; trip < myTrips.length; trip++) {
-      if(trip === 0) {
-        printRecommendedTrip(myTrips[trip]);
+function manipulateAndPrintWalk(segment, box) {
+  const origin = segment["from"];
+  const destination = segment["to"];
+  const duration = segment["times"]["durations"]["total"];
+  let message;
+  if (origin !== undefined && origin["origin"] !== undefined) {
+    message = `Walk for ${duration} minutes to stop #${destination["stop"]["key"]} - ${destination["stop"]["name"]}`;
+  } else if (destination !== undefined && destination["destination"] !== undefined ) {
+    message = `Walk for ${duration}  minutes to your destination.`;
+  } else if (destination === undefined || origin === undefined) {
+    message = `walk for ${duration} minutes`;
+  }
+
+  box.insertAdjacentHTML(
+    "beforeend",
+    `<li><i class="fas fa-walking" aria-hidden="true"></i>${message}</li>`
+  );
+}
+
+function workWithTrips(myTrips) {
+  recommendedTrip.insertAdjacentHTML("beforeend", ` <h2>Recommeded-Trip</h2>`);
+  if (myTrips.length > 1) {
+    alternativeTrips.insertAdjacentHTML(
+      "beforeend",
+      `<h2>Alternative-Trips</h2>`
+    );
+    for (let trip = 0; trip < myTrips.length; trip++) {
+      if (trip === 0) {
+        printTrip(myTrips[trip], recommendedTrip);
       } else {
-        printAlternativeTrip(myTrips[trip]);
+        printTrip(myTrips[trip], alternativeTrips);
       }
     }
   }
 }
 
-function planningTripFunctionality(origin, destination) {
-  fetchTheTrip(origin, destination)
-    .then((data) => {
-      workWithTrips(data);
-  });
+function checkIfTripsFound(trips) {
+  console.log('clear');
+  if (trips.length === 0) {
+    notifyUserForDataError("no routes found");
+  } else {
+    const myTrips = manipulateTripsData(trips);
+    workWithTrips(myTrips);
+  }
 }
 
-function planTripFunction() {
+function planningTripFunctionality(origin, destination) {
+  fetchTheTrip(origin, destination)
+  .then((tripsResponse) => {
+    if(tripsResponse !== undefined) {
+      checkIfTripsFound(tripsResponse.plans);
+    } else (notifyUserForDataError("No data found"))
+  })
+  .catch(error => console.log('error:' + error));
+}
+
+function planTrip() {
   let originPlace = originUL.querySelector(".selected");
   let destinationPlace = destinationUL.querySelector(".selected");
+  recommendedTrip.innerHTML = "";
+  alternativeTrips.innerHTML = "";
   const message = checkForSelectedPlaces(originPlace, destinationPlace);
   if (message === true) {
     const origin = {
@@ -287,5 +290,5 @@ destinationUL.addEventListener("click", (event) => {
 });
 
 planButton.addEventListener("click", () => {
-  planTripFunction();
+  planTrip();
 });
